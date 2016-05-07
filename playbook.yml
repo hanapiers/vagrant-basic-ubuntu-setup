@@ -1,0 +1,37 @@
+---
+- hosts: all
+  become: yes
+  become_method: sudo
+  tasks:
+  - name: Install apache2
+    apt: pkg=apache2 state=latest update_cache=yes
+
+  - name: Enable rewrite module
+    apache2_module: name=rewrite state=present
+    notify:
+    - Restart apache2
+
+  - name: Install php5
+    apt: pkg=libapache2-mod-php5 state=latest update_cache=yes
+
+  - name: Enable php5 module
+    apache2_module: name=php5 state=present
+    notify:
+    - Restart apache2
+
+  - name: Install mysql
+    apt: name={{ item }} update_cache=yes state=latest
+    with_items:
+    - mysql-server
+    - libapache2-mod-auth-mysql
+    - php5-mysql
+    notify: 
+    - Restart apache2
+
+  - name: Install redis
+    apt: pkg=redis-server state=latest update_cache=yes
+
+
+  handlers:
+  - name: Restart apache2
+    service: name=apache2 state=restarted
